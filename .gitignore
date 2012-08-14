@@ -1,5 +1,5 @@
 # Ignore none
-projects/*/cst/
+projects/
 *.swp
 lib/*.swp
 lib/*.swo
