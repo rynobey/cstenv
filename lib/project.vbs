@@ -13,7 +13,7 @@ function createProject(projName, returnProject)
   set cstProject = CreateObject("CSTStudio.Application")
 
   ''Initialise variables
-  envPath = fsProject.getAbsolutePathName("..") + "\"
+  envPath = fsProject.getAbsolutePathName(".") + "\"
   libPath = envPath + "lib\"
   projPath = envPath + "projects\" + projName + "\"
 
