@@ -141,6 +141,7 @@ end sub
 
 sub projectMenu(project)
 	dim entered, break, cstPath, cstRoot, projName
+
 	break = false
 
 	''Get the project path
@@ -156,6 +157,7 @@ sub projectMenu(project)
 		''Show the available options
 		stdout.writeLine("1) Build model")
 		stdout.writeLine("2) Save project")
+    stdout.writeLine("3) Clean project (undo ALL changes)")
 		stdout.writeLine("b) back (close project)")
 		stdout.writeLine("")
 
@@ -166,19 +168,28 @@ sub projectMenu(project)
 		entered = stdin.readLine
 		stdout.writeLine("")
 		if entered = "b" then
+			msg = "Saving project"
+			showStatus 0
+      project.SaveAs cstRoot + "\" + projName + ".cst" , False
+			showStatus 1
 			project.Quit
 			set project = nothing
 			break = true
 		elseif entered = "1" then
 			msg = "Building model"
 			showStatus 0
-			test	
+			build(project)
 			showStatus 1
 		elseif entered = "2" then
 			msg = "Saving project"
 			showStatus 0
-			project.Save
+      project.SaveAs cstRoot + "\" + projName + ".cst" , False
 			showStatus 1
+    elseif entered = "3" then
+      msg = "Cleaning (removing ALL changes)"
+      showStatus 0
+      set project = cleanProject(project)
+      showStatus 1
 		end if
 	wend
 

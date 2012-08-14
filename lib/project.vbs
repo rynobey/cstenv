@@ -133,3 +133,16 @@ function existFileProject(projName)
   ''Release memory
   set fsProject = nothing
 end function
+
+function cleanProject(project)
+  ''Function that cleans the project (deletes ALL changes)
+
+	''Get the project path
+	cstPath = project.getProjectPath("Project")
+	cstRoot = project.getProjectPath("Root")
+	projName = right(cstPath, len(cstPath) - inStrRev(cstPath, "\"))
+
+  project.fileNew
+  project.SaveAs cstRoot + "\" + projName + ".cst" , False
+  set cleanProject = project
+end function
