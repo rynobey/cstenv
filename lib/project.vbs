@@ -59,13 +59,14 @@ function openProject(projName)
   Set fsProject = CreateObject("Scripting.FileSystemObject")
 
   ''Initialise variables
-  envPath = fsProject.getAbsolutePathName("..") + "\"
+  envPath = fsProject.getAbsolutePathName(".") + "\"
   projPath = envPath + "projects\" + projName + "\"
 
   ''Get CST MWS objects
   set cstProject = CreateObject("CSTStudio.Application")
 
   ''Set the return value
+  set openProject = nothing
   if existFileProject(projName) then
     set openProject = cstProject.OpenFile(projPath + "cst\" + projName + ".cst")
   end if
@@ -91,7 +92,7 @@ end function
 function existFoldersProject(projName)
   ''Function to check if the project folders exist
   Set fsProject = CreateObject("Scripting.FileSystemObject")
-  envPath = fsProject.getAbsolutePathName("..") + "\"
+  envPath = fsProject.getAbsolutePathName(".") + "\"
   projPath = envPath + "projects\" + projName + "\"
 
   existFoldersProject = true
@@ -120,7 +121,7 @@ end function
 function existFileProject(projName)
   ''Function to check if the CST MWS project file exists
   Set fsProject = CreateObject("Scripting.FileSystemObject")
-  envPath = fsProject.getAbsolutePathName("..") + "\"
+  envPath = fsProject.getAbsolutePathName(".") + "\"
   projPath = envPath + "projects\" + projName + "\"
 
   if fsProject.FileExists(projPath + "cst\" + projName + ".cst") then

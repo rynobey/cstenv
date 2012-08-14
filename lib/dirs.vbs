@@ -29,3 +29,7 @@ function CreateDirs(paths)
   ' Release the file system object
   set fsDirs = nothing
 end function
+
+function getAbsoluteParent(path)
+	getAbsoluteParent = left(path, inStrRev(path, "\"))
+end function
