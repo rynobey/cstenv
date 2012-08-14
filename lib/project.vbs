@@ -31,7 +31,6 @@ function createProject(projName, returnProject)
   'Create and save a new CST MWS project if it does not yet exist
   set proj = nothing
   if not existFileProject(projName) then
-    wsProject.echo "file does not exist"
     set proj = cstProject.newMWS
     proj.SaveAs projPath + "cst\" + projName + ".cst" , False
     if not returnProject then
@@ -39,7 +38,6 @@ function createProject(projName, returnProject)
       set proj = nothing
     end if
   elseif returnProject then
-    wsProject.echo "opening"
     set proj = cstProject.OpenFile(projPath + "cst\" + projName + ".cst")
   end if
 
@@ -68,8 +66,9 @@ function openProject(projName)
   set cstProject = CreateObject("CSTStudio.Application")
 
   ''Set the return value
-  'TODO: implement exists check
-  set openProject = cstProject.OpenFile(projPath + "cst\" + projName + ".cst")
+  if existFileProject(projName) then
+    set openProject = cstProject.OpenFile(projPath + "cst\" + projName + ".cst")
+  end if
 
   ''Release memory
   set cstProject = nothing
@@ -96,21 +95,23 @@ function existFoldersProject(projName)
   projPath = envPath + "projects\" + projName + "\"
 
   existFoldersProject = true
-  if not fsProject.FolderExists(projPath) then
-    existFoldersProject = false
-  end if
-  if not fsProject.FolderExists(projPath + "model") then
-    existFoldersProject = false
-  end if
-  if not fsProject.FolderExists(projPath + "simulations") then
-    existFoldersProject = false
-  end if
-  if not fsProject.FolderExists(projPath + "results") then
-    existFoldersProject = false
-  end if
-  if not fsProject.FolderExists(projPath + "cst") then
-    existFoldersProject = false
-  end if
+  with fsProject
+    if not .FolderExists(projPath) then
+      existFoldersProject = false
+    end if
+    if not .FolderExists(projPath + "model") then
+      existFoldersProject = false
+    end if
+    if not .FolderExists(projPath + "simulations") then
+      existFoldersProject = false
+    end if
+    if not .FolderExists(projPath + "results") then
+      existFoldersProject = false
+    end if
+    if not .FolderExists(projPath + "cst") then
+      existFoldersProject = false
+    end if
+  end with
 
   ''Release memory
   set fsProject = nothing
