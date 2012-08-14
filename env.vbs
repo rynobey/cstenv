@@ -3,25 +3,31 @@
 ''***** INITIALISATION *****
 
 option explicit
-dim wsEnv, shEnv, fsEnv, stdout, stdin, envPath, libPath, msg, lineLength
+
+''Define GLOBAL variables
+dim ws, sh, fs, cst, stdout, stdin, envPath, libPath, msg, lineLength, project
 
 ''Get VBScript objects
-set wsEnv = WScript
-set shEnv = CreateObject("WScript.Shell")
-set fsEnv = CreateObject("Scripting.FileSystemObject")
-set stdout = wsEnv.stdout
-set stdin = wsEnv.stdin
+set ws = WScript
+set sh = CreateObject("WScript.Shell")
+set fs = CreateObject("Scripting.FileSystemObject")
+
+''Get CST MWS objects
+set cst = CreateObject("CSTStudio.Application")
 
 ''Initialise variables
-envPath = fsEnv.getAbsolutePathName(".") + "\"
+set stdout = ws.stdout
+set stdin = ws.stdin
+envPath = fs.getAbsolutePathName(".") + "\"
 libPath = envPath + "lib\"
 lineLength = 80
 
+''Enable external library inclusion
+Execute fs.OpenTextFile(libPath + "import.vbs", 1).ReadAll()
+
+''Include external libaries
 msg = "Importing libraries"
 showStatus 0
-''Enable external library inclusion
-Execute fsEnv.OpenTextFile(libPath + "import.vbs", 1).ReadAll()
-''Include external libaries
 Execute include(libPath + "project").ReadAll()
 Execute include(libPath + "dirs").ReadAll()
 showStatus 1
@@ -88,16 +94,17 @@ sub finish()
   ''Release memory
   msg = "Exiting: Collecting garbage"
   showStatus 0 
-  set wsEnv = nothing
-  set shEnv = nothing
-  set fsEnv = nothing
+  set ws = nothing
+  set sh = nothing
+  set fs = nothing
   set stdin = nothing
+  set cst = nothing
   showStatus 1 
   set stdout = nothing
 end sub
 
 sub openProjectMenu()
-  dim entered, break, p
+  dim entered, break
   break = false
   while not break
     ''Show the available options
@@ -127,19 +134,19 @@ sub openProjectMenu()
       if entered <> "!back" then
 				msg = "Opening"
 				showStatus 0
-        set p = openProject(entered)
-        if p is nothing then
+        set project = openProject(entered)
+        if project is nothing then
 					showStatus -1
         else
 					showStatus 1
-          projectMenu(p)
+          projectMenu()
         end if
       end if
     end if
   wend
 end sub
 
-sub projectMenu(project)
+sub projectMenu()
 	dim entered, break, cstPath, cstRoot, projName
 
 	break = false
@@ -152,7 +159,7 @@ sub projectMenu(project)
 	while not break
 
 		''Reload project scripts
-		Execute fsEnv.OpenTextFile(getAbsoluteParent(cstRoot) + "\main.vbs", 1).ReadAll()
+		Execute fs.OpenTextFile(getAbsoluteParent(cstRoot) + "\main.vbs", 1).ReadAll()
 
 		''Show the available options
 		stdout.writeLine("1) Build model")
@@ -211,7 +218,7 @@ sub newProjectMenu()
     stdout.writeLine("")
     if entered = "!back" then
       break = true
-    else
+    elseif entered <> "" then
       'TODO: implement name check for illegal characters
       msg = "Creating new project"
       showStatus 0

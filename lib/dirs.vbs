@@ -6,9 +6,8 @@ function CreateDirs(paths)
 '                        multi level, absolute or relative,
 '                        "d:\folder\subfolder" format or UNC
 
-  set fsDirs = CreateObject( "Scripting.FileSystemObject" )
   ' Convert relative to absolute path
-  strDirs = fsDirs.GetAbsolutePathName(paths)
+  strDirs = fs.GetAbsolutePathName(paths)
   ' Split a multi level path in its "components"
   arrDirs = Split(strDirs, "\")
   ' Check if the absolute path is UNC or not
@@ -21,13 +20,11 @@ function CreateDirs(paths)
   end if
   ' Check each (sub)folder and create it if it doesn't exist
   for i = idxFirst to Ubound(arrDirs)
-      strDirBuild = fsDirs.BuildPath(strDirBuild, arrDirs(i))
-      if not fsDirs.FolderExists(strDirBuild) then 
-          fsDirs.CreateFolder strDirBuild
+      strDirBuild = fs.BuildPath(strDirBuild, arrDirs(i))
+      if not fs.FolderExists(strDirBuild) then 
+          fs.CreateFolder strDirBuild
       end if
   next
-  ' Release the file system object
-  set fsDirs = nothing
 end function
 
 function getAbsoluteParent(path)

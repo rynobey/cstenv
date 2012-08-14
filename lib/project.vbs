@@ -4,23 +4,14 @@ function createProject(projName, returnProject)
   ''Function for creating a new CST MWS project and saving it
   'Returns the project if returnProject = true
 
-  ''Get VBScript objects
-  Set wsProject = WScript
-  Set shProject = CreateObject("WScript.Shell")
-  Set fsProject = CreateObject("Scripting.FileSystemObject")
-
-  ''Get CST MWS objects
-  set cstProject = CreateObject("CSTStudio.Application")
 
   ''Initialise variables
-  envPath = fsProject.getAbsolutePathName(".") + "\"
-  libPath = envPath + "lib\"
   projPath = envPath + "projects\" + projName + "\"
 
-  ''Enable external library inclusion
-  Execute fsProject.OpenTextFile(libPath + "import.vbs", 1).ReadAll()
-  ''Include external libaries
-  Execute include(libPath + "dirs").ReadAll()
+  '''Enable external library inclusion
+  'Execute fs.OpenTextFile(libPath + "import.vbs", 1).ReadAll()
+  '''Include external libaries
+  'Execute include(libPath + "dirs").ReadAll()
 
   'Create project folders if they do not yet exist
   CreateDirs(projPath + "model")
@@ -29,74 +20,53 @@ function createProject(projName, returnProject)
   CreateDirs(projPath + "cst")
 
   'Create and save a new CST MWS project if it does not yet exist
-  set proj = nothing
+  set project = nothing
   if not existFileProject(projName) then
-    set proj = cstProject.newMWS
-    proj.SaveAs projPath + "cst\" + projName + ".cst" , False
+    set project = cst.newMWS
+    project.SaveAs projPath + "cst\" + projName + ".cst" , False
     if not returnProject then
-      proj.Quit
-      set proj = nothing
+      project.Quit
+      set project = nothing
     end if
-  elseif returnProject then
-    set proj = cstProject.OpenFile(projPath + "cst\" + projName + ".cst")
   end if
 
-  ''Release memory
-  set cstProject = nothing
-  set shProject = nothing
-  set wsProject = nothing
-  set fsProject = nothing
-
   ''Set the return value
-  set createProject = proj
+  set createProject = project
 end function
 
 function openProject(projName)
   ''Function for opening an existing project
   'Returns the project if opened, nothing if it does not exist
 
-  ''Get VBScript objects
-  Set fsProject = CreateObject("Scripting.FileSystemObject")
-
   ''Initialise variables
-  envPath = fsProject.getAbsolutePathName(".") + "\"
   projPath = envPath + "projects\" + projName + "\"
-
-  ''Get CST MWS objects
-  set cstProject = CreateObject("CSTStudio.Application")
 
   ''Set the return value
   set openProject = nothing
   if existFileProject(projName) then
-    set openProject = cstProject.OpenFile(projPath + "cst\" + projName + ".cst")
+    set openProject = cst.OpenFile(projPath + "cst\" + projName + ".cst")
   end if
-
-  ''Release memory
-  set cstProject = nothing
-  set fsProject = nothing
 end function
 
-function saveAndQuitProject(proj)
+function saveAndQuitProject(project)
   ''Function for saving and closing a project
   'Returns true if successfull, false otherwise
 
   ''Save the current state and quit
   'TODO: implement success check
-  proj.Save
-  proj.Quit
+  project.Save
+  project.Quit
 
   ''Release memory
-  set proj = nothing
+  set project = nothing
 end function
 
 function existFoldersProject(projName)
   ''Function to check if the project folders exist
-  Set fsProject = CreateObject("Scripting.FileSystemObject")
-  envPath = fsProject.getAbsolutePathName(".") + "\"
   projPath = envPath + "projects\" + projName + "\"
 
   existFoldersProject = true
-  with fsProject
+  with fs
     if not .FolderExists(projPath) then
       existFoldersProject = false
     end if
@@ -113,25 +83,17 @@ function existFoldersProject(projName)
       existFoldersProject = false
     end if
   end with
-
-  ''Release memory
-  set fsProject = nothing
 end function
 
 function existFileProject(projName)
   ''Function to check if the CST MWS project file exists
-  Set fsProject = CreateObject("Scripting.FileSystemObject")
-  envPath = fsProject.getAbsolutePathName(".") + "\"
   projPath = envPath + "projects\" + projName + "\"
 
-  if fsProject.FileExists(projPath + "cst\" + projName + ".cst") then
+  if fs.FileExists(projPath + "cst\" + projName + ".cst") then
     existFileProject = true
   else 
     existFileProject = false
   end if
-
-  ''Release memory
-  set fsProject = nothing
 end function
 
 function cleanProject(project)

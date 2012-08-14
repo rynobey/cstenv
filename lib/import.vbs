@@ -1,6 +1,3 @@
 function include(pathToFile)
-  set fsImport = CreateObject( "Scripting.FileSystemObject" )
-  set include = fsImport.OpenTextFile(pathToFile + ".vbs", 1)
-  ' Release the file system object
-  set fsImport = nothing
+  set include = fs.OpenTextFile(pathToFile + ".vbs", 1)
 end function
