@@ -1,11 +1,7 @@
-# Build and Object Folders
-bin/
-obj/
+# Ignore all
+*
 
-#User Specific Files
-*.user
-*.suo
-
-#Resource Caches
-_ReSharper.*
-*.sln.cache
+# Except these
+!.gitignore
+!lib/*.vds
+!*.vds
