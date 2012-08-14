@@ -1,16 +1,14 @@
-function CreateDirs(path)
-' This subroutine creates multiple folders like CMD.EXE's internal MD command.
-' By default VBScript can only create one level of folders at a time (blows
-' up otherwise!).
-'
+''Ths file provides utility functions for folder operations
+
+function CreateDirs(paths)
 ' Argument:
-' MyDirName   [string]   folder(s) to be created, single or
+' paths   [string]   folder(s) to be created, single or
 '                        multi level, absolute or relative,
 '                        "d:\folder\subfolder" format or UNC
 
   set fsDirs = CreateObject( "Scripting.FileSystemObject" )
   ' Convert relative to absolute path
-  strDirs = fsDirs.GetAbsolutePathName(path)
+  strDirs = fsDirs.GetAbsolutePathName(paths)
   ' Split a multi level path in its "components"
   arrDirs = Split(strDirs, "\")
   ' Check if the absolute path is UNC or not
@@ -24,8 +22,8 @@ function CreateDirs(path)
   ' Check each (sub)folder and create it if it doesn't exist
   for i = idxFirst to Ubound(arrDirs)
       strDirBuild = fsDirs.BuildPath(strDirBuild, arrDirs(i))
-      if not fs.FolderExists(strDirBuild) then 
-          fs.CreateFolder strDirBuild
+      if not fsDirs.FolderExists(strDirBuild) then 
+          fsDirs.CreateFolder strDirBuild
       end if
   next
   ' Release the file system object
