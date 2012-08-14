@@ -1,7 +1,4 @@
-# Ignore all
-*
-
-# Except these
-!.gitignore
-!lib/*.vds
-!*.vds
+# Ignore none
+projects/
+*.swp
+lib/*.swp
