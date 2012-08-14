@@ -24,9 +24,10 @@ Execute include(libPath + "dirs").ReadAll()
 CreateDirs(projPath + "model")
 CreateDirs(projPath + "simulations")
 CreateDirs(projPath + "results")
+CreateDirs(projPath + "cst")
 
 'Create and save a new CST MWS project if it does not yet exist
-proj.SaveAs projPath + projName + ".cst" , False
+proj.SaveAs projPath + "cst\" + projName + ".cst" , False
 proj.Quit
 
 ''Release memory
