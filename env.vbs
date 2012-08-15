@@ -41,9 +41,7 @@ sub init()
   set library = fs.getFolder(libPath)
   for each file in library.files
     extension = right(file.name, len(file.name) - inStrRev(file.name, "."))
-    stdout.writeLine(extension)
     if extension = "vbs" then
-      stdout.writeLine(file.path)  
       ExecuteGlobal fs.OpenTextFile(file.path, 1).ReadAll()
     end if
   next
