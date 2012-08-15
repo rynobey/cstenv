@@ -22,22 +22,8 @@ function txLineConical(radius, theta1, theta2, offsetX, offsetY, offsetZ, orient
     .Reset 
     .component componentName
     .Name componentName + ":" + profileName
-    .Vector "0", "0", cStr(offsetZ) 
-    .UsePickedPoints "False" 
-    .InvertPickedPoints "False" 
-    .MultipleObjects "False" 
-    .GroupObjects "False" 
-    .Repetitions "1" 
-    .MultipleSelection "False" 
-    .Transform "Shape", "Translate" 
-  End With 
-
-  With project.Transform 
-    .Reset 
-    .component componentName
-    .Name componentName + ":" + profileName
     .Origin "Free" 
-    .Center "0", "0", cStr(offsetZ) 
+    .Center "0", "0", "0" 
     .Angle "0", cStr(90-theta2+dTheta/2), "0"  
     .MultipleObjects "False" 
     .GroupObjects "False" 
@@ -49,7 +35,7 @@ function txLineConical(radius, theta1, theta2, offsetX, offsetY, offsetZ, orient
   With project.Pick
     .ClearAllPicks
     .PickFaceFromId componentName + ":" + profileName, "1"
-    .AddEdge "0.0", "0.0", cStr(offsetZ + 10), "0.0", "0.0", cStr(offsetZ - 10)
+    .AddEdge "0.0", "0.0", "10", "0.0", "0.0", "-10"
   End With
 
   With project.Rotate 
@@ -84,11 +70,49 @@ function txLineConical(radius, theta1, theta2, offsetX, offsetY, offsetZ, orient
     .CenterRadius radius
     .TopRadius "0" 
     .BottomRadius "0" 
-    .Center "0", "0", cStr(offsetZ)
+    .Center "0", "0", "0"
     .Segments "0" 
     .Create 
   End With
 
   project.Solid.Intersect componentName + ":" + solidName, componentName + ":" + endName 
+
+  ''rotate to orientation
+  With project.Transform 
+    .Reset 
+    .component componentName
+    .Name componentName + ":" + solidName 
+    .Origin "Free" 
+    .Center "0", "0", "0" 
+    if orientation = "x" then
+      .Angle "0", "90", "0"
+    elseif orientation = "y" then
+      .Angle "-90", "0", "0"
+    elseif orientation = "z" then
+      .Angle "0", "0", "0"
+    end if
+    .MultipleObjects "False" 
+    .GroupObjects "False" 
+    .Repetitions "1" 
+    .MultipleSelection "False" 
+    .Transform "Shape", "Rotate" 
+  End With 
+
+  ''Move to offset
+  With project.Transform 
+    .Reset 
+    .component componentName
+    .Name componentName + ":" + solidName
+    .Vector cStr(offsetX), cStr(offsetY), cStr(offsetZ) 
+    .UsePickedPoints "False" 
+    .InvertPickedPoints "False" 
+    .MultipleObjects "False" 
+    .GroupObjects "False" 
+    .Repetitions "1" 
+    .MultipleSelection "False" 
+    .Transform "Shape", "Translate" 
+  End With 
+
+  
 
 end function
