@@ -1,36 +1,13 @@
 ''Script for performing general operations on projects
+option explicit
 
 ''***** INITIALISATION *****
-
-option explicit
 
 ''Define GLOBAL variables
 dim ws, sh, fs, cst, stdout, stdin, envPath, libPath, msg, lineLength, project
 
-''Get VBScript objects
-set ws = WScript
-set sh = CreateObject("WScript.Shell")
-set fs = CreateObject("Scripting.FileSystemObject")
-
-''Get CST MWS objects
-set cst = CreateObject("CSTStudio.Application")
-
-''Initialise variables
-set stdout = ws.stdout
-set stdin = ws.stdin
-envPath = fs.getAbsolutePathName(".") + "\"
-libPath = envPath + "lib\"
-lineLength = 80
-
-''Enable external library inclusion
-Execute fs.OpenTextFile(libPath + "import.vbs", 1).ReadAll()
-
-''Include external libaries
-msg = "Importing libraries"
-showStatus 0
-Execute include(libPath + "project").ReadAll()
-Execute include(libPath + "dirs").ReadAll()
-showStatus 1
+''Run helper sub-routine
+init
 
 
 ''***** MAIN *****
@@ -38,7 +15,43 @@ showStatus 1
 mainMenu
 finish
 
+
 ''***** HELPERS *****
+
+sub init()
+  ''Get VBScript objects
+  set ws = WScript
+  set sh = CreateObject("WScript.Shell")
+  set fs = CreateObject("Scripting.FileSystemObject")
+
+  ''Get CST MWS objects
+  set cst = CreateObject("CSTStudio.Application")
+
+  ''Initialise variables
+  set stdout = ws.stdout
+  set stdin = ws.stdin
+  envPath = fs.getAbsolutePathName(".") + "\"
+  libPath = envPath + "lib\"
+  lineLength = 80
+
+  ''Include all external libaries
+  msg = "Importing libraries"
+  showStatus 0
+  dim library, file, extension
+  set library = fs.getFolder(libPath)
+  for each file in library.files
+    extension = right(file.name, len(file.name) - inStrRev(file.name, "."))
+    stdout.writeLine(extension)
+    if extension = "vbs" then
+      stdout.writeLine(file.path)  
+      ExecuteGlobal fs.OpenTextFile(file.path, 1).ReadAll()
+    end if
+  next
+  set library = nothing
+  set file = nothing
+  set extension = nothing
+  showStatus 1
+end sub
 
 function showStatus(status)
 	dim i

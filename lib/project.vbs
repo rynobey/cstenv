@@ -8,11 +8,6 @@ function createProject(projName, returnProject)
   ''Initialise variables
   projPath = envPath + "projects\" + projName + "\"
 
-  '''Enable external library inclusion
-  'Execute fs.OpenTextFile(libPath + "import.vbs", 1).ReadAll()
-  '''Include external libaries
-  'Execute include(libPath + "dirs").ReadAll()
-
   'Create project folders if they do not yet exist
   CreateDirs(projPath + "model")
   CreateDirs(projPath + "simulations")
