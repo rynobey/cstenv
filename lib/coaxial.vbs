@@ -1,77 +1,76 @@
-function txLineCoaxial(length, innerRadius, outerRadius, offsetX, offsetY, offsetZ, orientation, componentName, solidName, material)
+Class TxLineCoaxial
 
-  ''Internal settings
-  dim innerName
-  
-  With project.Cylinder 
-    .Reset 
-    innerName = project.Solid.getNextFreeName()
-    .Name innerName 
-    .Component componentName
-    .Material material
-    .OuterRadius innerRadius
-    .InnerRadius "0"
-    .Axis "z"
-    .Zrange cStr(-length/2), cStr(length/2) 
-    .Xcenter "0" 
-    .Ycenter "0" 
-    .Segments "0" 
-    .Create 
-  End With 
+  ''Define public variables
+  Public length
+  Public innerRadius
+  Public outerRadius
+  Public offsetX
+  Public offsetY
+  Public offsetZ
+  Public orientation
+  Public componentName
+  Public solidName
+  Public material
 
-  With project.Cylinder 
-    .Reset
-    .Name solidName
-    .Component componentName
-    .Material material
-    .OuterRadius outerRadius
-    .InnerRadius "0"
-    .Axis "z"
-    .Zrange cStr(-length/2), cStr(length/2) 
-    .Xcenter "0" 
-    .Ycenter "0" 
-    .Segments "0" 
-    .Create 
-  End With 
+  ''Define private variables
+  Private innerName
+ 
 
-  With project.Solid 
-    .Subtract componentName + ":" + solidName, componentName + ":" + innerName
-  End With 
+  ''Define public methods
 
-  ''rotate to orientation
-  With project.Transform 
-    .Reset 
-    .component componentName
-    .Name componentName + ":" + solidName 
-    .Origin "Free" 
-    .Center "0", "0", "0" 
-    if orientation = "x" then
-      .Angle "0", "90", "0"
-    elseif orientation = "y" then
-      .Angle "-90", "0", "0"
-    elseif orientation = "z" then
-      .Angle "0", "0", "0"
-    end if
-    .MultipleObjects "False" 
-    .GroupObjects "False" 
-    .Repetitions "1" 
-    .MultipleSelection "False" 
-    .Transform "Shape", "Rotate" 
-  End With 
+  Public Sub Origin(X, Y, Z)
+    offsetX = X
+    offsetY = Y
+    offsetZ = Z
+  End Sub
 
-  ''Move to offset
-  With project.Transform 
-    .Reset 
-    .component componentName
-    .Name componentName + ":" + solidName
-    .Vector cStr(offsetX), cStr(offsetY), cStr(offsetZ) 
-    .UsePickedPoints "False" 
-    .InvertPickedPoints "False" 
-    .MultipleObjects "False" 
-    .GroupObjects "False" 
-    .Repetitions "1" 
-    .MultipleSelection "False" 
-    .Transform "Shape", "Translate" 
-  End With 
+  Public Sub Create
+    OuterCylinder
+    InnerCylinder
 
-End function
+    With project.Solid 
+      .Subtract componentName + ":" + solidName, componentName + ":" + innerName
+    End With 
+
+    TransformSolid componentName, solidName, orientation, offsetX, offsetY, offsetZ
+  End Sub
+
+
+  ''Define private methods
+
+  Private Sub InnerCylinder()
+    With project.Cylinder 
+      .Reset 
+      innerName = project.Solid.getNextFreeName()
+      .Name innerName 
+      .Component componentName
+      .Material material
+      .OuterRadius innerRadius
+      .InnerRadius "0"
+      .Axis "z"
+      .Zrange cStr(-length/2), cStr(length/2) 
+      .Xcenter "0" 
+      .Ycenter "0" 
+      .Segments "0" 
+      .Create 
+    End With 
+  End Sub 
+
+  Private Sub OuterCylinder()
+    With project.Cylinder 
+      .Reset
+      .Name solidName
+      .Component componentName
+      .Material material
+      .OuterRadius outerRadius
+      .InnerRadius "0"
+      .Axis "z"
+      .Zrange cStr(-length/2), cStr(length/2) 
+      .Xcenter "0" 
+      .Ycenter "0" 
+      .Segments "0" 
+      .Create 
+    End With 
+  End Sub
+
+End Class
