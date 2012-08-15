@@ -1,15 +1,5 @@
 function txLineCoaxial(length, innerRadius, outerRadius, offsetX, offsetY, offsetZ, orientation, componentName, solidName, material)
 
-  ''Example arguments
-  'innerRadius = 1
-  'outerRadius = 2
-  'offsetZ = 1
-  'orientation = "z"
-  'length = 3
-  'componentName = "coaxial"
-  'solidName = "tx"
-  'material = "Vacuum"
-
   ''Internal settings
   dim innerName
   

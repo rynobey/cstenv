@@ -1,15 +1,4 @@
-function txLineConical(radius, theta1, theta2, offset, orientation, componentName, solidName, material)
-
-  ''Example input arguments
-  'radius = 5
-  'theta1 = 75
-  'theta2 = 90
-  'offset = 1
-  'material = "PEC"
-  'orientation = ""
-  'componentName = "conicalTx"
-  'solidName = "conicalLine"
-
+function txLineConical(radius, theta1, theta2, offsetX, offsetY, offsetZ, orientation, componentName, solidName, material)
 
   ''Internal settings
   dim profileName, endName
@@ -33,7 +22,7 @@ function txLineConical(radius, theta1, theta2, offset, orientation, componentNam
     .Reset 
     .component componentName
     .Name componentName + ":" + profileName
-    .Vector "0", "0", cStr(offset) 
+    .Vector "0", "0", cStr(offsetZ) 
     .UsePickedPoints "False" 
     .InvertPickedPoints "False" 
     .MultipleObjects "False" 
@@ -48,7 +37,7 @@ function txLineConical(radius, theta1, theta2, offset, orientation, componentNam
     .component componentName
     .Name componentName + ":" + profileName
     .Origin "Free" 
-    .Center "0", "0", cStr(offset) 
+    .Center "0", "0", cStr(offsetZ) 
     .Angle "0", cStr(90-theta2+dTheta/2), "0"  
     .MultipleObjects "False" 
     .GroupObjects "False" 
@@ -60,7 +49,7 @@ function txLineConical(radius, theta1, theta2, offset, orientation, componentNam
   With project.Pick
     .ClearAllPicks
     .PickFaceFromId componentName + ":" + profileName, "1"
-    .AddEdge "0.0", "0.0", cStr(offset + 10), "0.0", "0.0", cStr(offset - 10)
+    .AddEdge "0.0", "0.0", cStr(offsetZ + 10), "0.0", "0.0", cStr(offsetZ - 10)
   End With
 
   With project.Rotate 
@@ -95,7 +84,7 @@ function txLineConical(radius, theta1, theta2, offset, orientation, componentNam
     .CenterRadius radius
     .TopRadius "0" 
     .BottomRadius "0" 
-    .Center "0", "0", cStr(offset)
+    .Center "0", "0", cStr(offsetZ)
     .Segments "0" 
     .Create 
   End With
