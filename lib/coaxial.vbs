@@ -35,6 +35,11 @@ Class TxLineCoaxial
     TransformSolid componentName, solidName, orientation, offsetX, offsetY, offsetZ
   End Sub
 
+  Public Function Impedance()
+    charImpedance = 60*log((outerRadius)/(innerRadius))
+    impedance = charImpedance
+  End Function
+
 
   ''Define private methods
 

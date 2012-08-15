@@ -11,6 +11,8 @@ Class TxLineConical
   Public componentName
   Public solidName
   Public material
+  Public charImpedance
+
 
   ''Define private variables
   Private profileName, endName
@@ -24,7 +26,7 @@ Class TxLineConical
     offsetZ = Z
   End Sub
 
-  Public Function Create()
+  Public Sub Create()
     CreateFace
     TransformFace
     RotateFace
@@ -35,7 +37,12 @@ Class TxLineConical
 
     SphericalEnd
     TransformSolid componentName, solidName, orientation, offsetX, offsetY, offsetZ
-  End Function 
+  End Sub 
+
+  Public Function Impedance()
+    charImpedance = 60*log((project.tanD(theta2/2))/(project.tanD(theta1/2)))
+    impedance = charImpedance
+  End Function
 
 
   ''Private methods 
