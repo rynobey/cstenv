@@ -28,7 +28,7 @@ showStatus true
 
 ''***** MAIN *****
 
-
+handleInput
 finish
 
 ''***** HELPERS *****
@@ -44,6 +44,38 @@ function showStatus(completed)
     stdout.writeLine("DONE")
   end if
 end function
+
+sub showOptions()
+  stdout.writeLine("")
+  stdout.writeLine("Choose an action:")
+  stdout.writeLine("1) Create New CST MWS Project")
+  stdout.writeLine("2) Remove CST MWS Project")
+  stdout.writeLine("3) Rename CST MWS Project")
+  stdout.writeLine("Q) Quit")
+  stdout.writeLine("")
+end sub
+
+sub handleInput()
+  dim entered, break
+  break = false
+
+  do
+    ''Show the available options
+    showOptions
+    ''Indicate ready for input
+    stdout.write(">")
+
+    ''Handle input
+    entered = stdin.readLine
+    if entered = "1" then
+      stdout.writeLine("1")
+    elseif entered = "2" then
+      stdout.writeLine("2")
+    else if entered = "Q" then
+      break = true
+    end if
+  loop while not break
+end sub
 
 sub finish()
   ''Release memory
