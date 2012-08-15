@@ -1,4 +1,4 @@
-function txLineConical(radius, theta1, theta2, offset, material, orientation, componentName, solidName)
+function txLineConical(radius, theta1, theta2, offset, orientation, componentName, solidName, material)
 
   ''Example input arguments
   'radius = 5
@@ -83,7 +83,7 @@ function txLineConical(radius, theta1, theta2, offset, material, orientation, co
   End With
 
   project.Pick.ClearAllPicks
-  'project.Solid.Delete componentName + ":" + profileName
+  project.Solid.Delete componentName + ":" + profileName
 
   With project.Sphere 
     .Reset 
