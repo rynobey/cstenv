@@ -40,6 +40,63 @@ Class TxLineCoaxial
     impedance = charImpedance
   End Function
 
+  Public Function AddPort(number)
+    With project.Port 
+      .Reset 
+      .PortNumber cStr(number)
+      .Label "" 
+      .NumberOfModes "1" 
+      .AdjustPolarization "False" 
+      .PolarizationAngle "0.0" 
+      .ReferencePlaneDistance "0" 
+      .TextSize "50" 
+      .Coordinates "Free" 
+      .Orientation "zmax" 
+      .PortOnBound "False" 
+      .ClipPickedPortToBound "False" 
+      .Xrange cStr(-OuterRadius), cStr(OuterRadius) 
+      .Yrange cStr(-OuterRadius), cStr(OuterRadius) 
+      .Zrange cStr(Length/2), cStr(Length/2) 
+      .XrangeAdd "0.0", "0.0" 
+      .YrangeAdd "0.0", "0.0" 
+      .ZrangeAdd "0.0", "0.0" 
+      .SingleEnded "False" 
+      .Create 
+    End With 
+ 
+    With project.Transform 
+      .Reset 
+      .Name "port" + cStr(number)
+      .Origin "Free" 
+      .Center "0", "0", "0" 
+      if orientation = "x" then
+        .Angle "0", "90", "0"
+      elseif orientation = "y" then
+        .Angle "-90", "0", "0"
+      elseif orientation = "z" then
+        .Angle "0", "0", "0"
+      end if
+      .MultipleObjects "False" 
+      .GroupObjects "False" 
+      .Repetitions "1" 
+      .MultipleSelection "False" 
+      .Transform "Port", "Rotate" 
+    End With 
+
+    With project.Transform 
+      .Reset 
+      .Name "port" + cStr(number) 
+      .Vector cStr(offsetX), cStr(offsetY), cStr(offsetZ)
+      .UsePickedPoints "False" 
+      .InvertPickedPoints "False" 
+      .MultipleObjects "False" 
+      .GroupObjects "False" 
+      .Repetitions "1" 
+      .MultipleSelection "False" 
+      .Transform "Port", "Translate" 
+    End With 
+
+  End Function
 
   ''Define private methods
 

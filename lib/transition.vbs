@@ -4,10 +4,15 @@ Class ConicalCoaxialTransition
   Public offsetX
   Public offsetY
   Public offsetZ
-  Public direction 
   Public componentName
   Public solidName
   Public material
+  Public radius
+  Public r2
+  Public pathLength
+  Public coaxialLengthRemoved
+  Public conicalLengthRemoved
+
 
   ''Define private variables
   Private conical
@@ -28,9 +33,10 @@ Class ConicalCoaxialTransition
     offsetZ = Z
   End Sub
 
-  Public Sub Link(conicalLine, coaxialLine)
+  Public Sub Link(conicalLine, coaxialLine, radius)
     Set conical = conicalLine
     Set coaxial = coaxialLine
+    r1 = radius
     maxError = 0.05
 
     ''verify coaxial and conical impedances
@@ -44,7 +50,6 @@ Class ConicalCoaxialTransition
       ''determine the centres of the two tangent circles
       bR1 = coaxial.InnerRadius
       bR2 = coaxial.OuterRadius
-      r1 = 2
       arg1 = (r1 - (bR2 + r1)*project.sinD(90-conical.Theta2))
       arg2 = (project.cosD(90-conical.Theta2))
       a = arg1/arg2
@@ -106,6 +111,10 @@ Class ConicalCoaxialTransition
     arg1 = componentName + ":" + bigTorusName
     arg2 = componentName + ":" + smallTorusName
     project.Solid.Subtract arg1, arg2
+
+    pathRadius = (bR1 + r2 + bR2 + r1)/2 - (coaxial.OuterRadius + coaxial.InnerRadius)/2
+    pathAngle = project.Pi/180*(conical.Theta2 + abs(conical.Theta2 - conical.Theta1)/2)
+    pathLength = pathRadius*pathAngle
   End Sub
 
   Private Sub CreateTransition(bR1, bR2, r1, r2, a)
@@ -197,6 +206,11 @@ Class ConicalCoaxialTransition
     arg1 = conical.componentName + ":" + conical.solidName
     arg2 = componentName + ":" + cone2Name
     project.Solid.Subtract arg1, arg2 
+
+    arg1 = bR2 + r1 - r1*project.sinD(90-conical.Theta2)
+    arg2 = bR1 + r2 - r2*project.sinD(90-conical.Theta1)
+    ang = abs(conical.Theta2 + conical.Theta1)/2 - 90
+    conicalLengthRemoved = (arg1 + arg2)/(2*project.cosD(ang))
   End Sub
 
   Private Sub AdjustCoaxialLine(bR1, bR2, r1, r2, a)
@@ -221,6 +235,8 @@ Class ConicalCoaxialTransition
     arg1 = coaxial.componentName + ":" + coaxial.solidName
     arg2 = componentName + ":" + cylinderName
     project.Solid.Subtract arg1, arg2
+
+    coaxialLengthRemoved = coaxial.Length/2 + a 
   End Sub
 
 End Class

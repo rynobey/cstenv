@@ -1,3 +1,5 @@
+Set obj = New TxLineConical
+
 Class TxLineConical
 
   ''Define public variables

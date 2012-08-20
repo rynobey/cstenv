@@ -1,247 +1,101 @@
-''Script for performing general operations on projects
-option explicit
+Set env = New Environment
+env.Main()
+Set env = Nothing
 
-''***** INITIALISATION *****
+Class Environment
 
-''Define GLOBAL variables
-dim ws, sh, fs, cst, stdout, stdin, envPath, libPath, msg, lineLength, project
+  Private fs
+  Private dirs
+  Private EXIT_COMMAND
+  Public using
+  Public envPath
+  Public libPath
+  Public cst
+  Public Projects
+  
+  Private Sub Class_Initialize()
+    Set fs = CreateObject("Scripting.FileSystemObject")
+    envPath = fs.getAbsolutePathName(".")
+    Set Projects = CreateObject("Scripting.Dictionary")
+    Set dirs = Use("lib\dirs")
+    ExecuteGlobal "Set env = Me"
+    EXIT_COMMAND = "exit"
+    using = ""
+    ConCST
+  End Sub
 
-''Run helper sub-routine
-init
+  Private Sub Class_Terminate()
+    Set cst = Nothing
+    Set fs = Nothing
+    Set dirs = Nothing
+  End Sub
+
+  Private Sub ConCST()
+    if isEmpty(cst) then
+      Set cst = Use("lib/cst")
+    End if
+  End Sub
+
+  Private Sub InterpretCommand(cmd)
+    'TODO: tokenize cmd str on ":" characters and loop over tokens
+    if InStr(1, cmd, "Using", 1) = 1 then
+      using = Trim(Right(cmd, Len(cmd) - Len("Using")))
+    elseif using <> "" then
+      Projects.Item(using).InterpretCommand(cmd)
+    else
+      Execute cmd 
+    End if
+  End Sub
+
+  Public Sub Print(msg)
+    WScript.stdout.writeLine(msg)
+  End Sub
+
+  Public Sub Main()
+    While cmd <> EXIT_COMMAND
+      On Error Resume Next
+      Err.Clear
+      WScript.stdout.write(using & ">")
+      cmd = WScript.stdin.ReadLine
+      if cmd <> EXIT_COMMAND then
+        InterpretCommand(cmd)
+      End if
+      if Err.Number <> 0 then 
+        msg = "ERROR " & Err.Number & ": " & Err.Source
+        msg = msg & ": " & Err.Description
+        WScript.stdout.writeLine(msg)
+        Err.Clear
+      End if
+    Wend
+  End Sub
+
+  Public Function OpenProject(projectName)
+    Set temp = Use("lib\project")
+    temp.Init(projectName)
+    Projects.Add projectName, temp
+    Set OpenProject = temp
+  End Function
+
+  Public Function NewProject(projectName)
+    'Create project folders if they do not yet exist
+    path = envPath + "\projects\" + projectName + "\"
+    dirs.CreateDirs(path + "model")
+    dirs.CreateDirs(path + "simulations")
+    dirs.CreateDirs(path + "results")
+    dirs.CreateDirs(path + "cst")
+
+    'TODO: Add creation of default scripts
 
 
-''***** MAIN *****
+    'Open and return the newly created project
+    Set NewProject = OpenProject(projectName)
+  End Function
 
-mainMenu
-finish
 
+  Public Function Use(file)
+    location = envPath + "\" + file + ".vbs"
+    Execute fs.OpenTextFile(location, 1).ReadAll()
+    Set Use = obj
+  End Function
 
-''***** HELPERS *****
-
-sub init()
-  ''Get VBScript objects
-  set ws = WScript
-  set sh = CreateObject("WScript.Shell")
-  set fs = CreateObject("Scripting.FileSystemObject")
-
-  ''Get CST MWS objects
-  set cst = CreateObject("CSTStudio.Application")
-
-  ''Initialise variables
-  set stdout = ws.stdout
-  set stdin = ws.stdin
-  envPath = fs.getAbsolutePathName(".") + "\"
-  libPath = envPath + "lib\"
-  lineLength = 80
-
-  ''Include all external libaries
-  msg = "Importing libraries"
-  showStatus 0
-  dim library, file, extension
-  set library = fs.getFolder(libPath)
-  for each file in library.files
-    extension = right(file.name, len(file.name) - inStrRev(file.name, "."))
-    if extension = "vbs" then
-      ExecuteGlobal fs.OpenTextFile(file.path, 1).ReadAll()
-    end if
-  next
-  set library = nothing
-  set file = nothing
-  set extension = nothing
-  showStatus 1
-end sub
-
-function showStatus(status)
-	dim i
-  if status = 0 then
-    stdout.write(msg)
-	elseif status = 1 then
-		for i = 1 to lineLength-Len(msg)-Len("DONE") step 1
-			stdout.write(".")
-		next
-		stdout.writeLine("DONE")
-		stdout.writeLine("")
-	elseif status = -1 then
-		for i = 1 to lineLength-Len(msg)-Len("FAILED") step 1
-			stdout.write(".")
-		next
-		stdout.writeLine("FAILED")
-		stdout.writeLine("")
-	end if
-end function
-
-sub mainMenu()
-  dim entered, break, counter
-  break = false
-  while not break
-    ''Show the available options
-    stdout.writeLine("Choose an action:")
-    stdout.writeLine("1) Open CST MWS Project")
-    stdout.writeLine("2) Create New CST MWS Project")
-    stdout.writeLine("3) Remove CST MWS Project")
-    stdout.writeLine("4) Rename CST MWS Project")
-    stdout.writeLine("Q) Quit")
-
-    ''Indicate ready to receive input
-		stdout.writeLine("")
-    stdout.write(">")
-
-    ''Handle input
-    entered = stdin.readLine
-    stdout.writeLine("")
-    if entered = "1" then
-      openProjectMenu
-    elseif entered = "2" then
-      newProjectMenu
-    elseif entered = "3" then
-      stdout.writeLine("3")
-    elseif entered = "Q"  or entered = "q" then
-      break = true
-    end if
-  wend
-end sub
-
-sub finish()
-  ''Release memory
-  msg = "Exiting: Collecting garbage"
-  showStatus 0 
-  set ws = nothing
-  set sh = nothing
-  set fs = nothing
-  set stdin = nothing
-  set cst = nothing
-  showStatus 1 
-  set stdout = nothing
-end sub
-
-sub openProjectMenu()
-  dim entered, break
-  break = false
-  while not break
-    ''Show the available options
-    stdout.writeLine("1) Open project with name")
-    stdout.writeLine("b) back")
-
-    ''Indicate ready to receive input
-    stdout.writeLine("")
-    stdout.write(">")
-    
-    ''Handle input
-    entered = stdin.readLine
-    stdout.writeLine("")
-    if entered = "b" then
-      break = true
-    elseif entered = "1" then
-      ''Read name from stdin
-      stdout.writeLine("Enter the project name:")
-
-      ''Indicate ready to receive input
-      stdout.writeLine("")
-      stdout.write(">")
-      
-      ''Handle input
-      entered = stdin.readLine
-      stdout.writeLine("")
-      if entered <> "!back" then
-				msg = "Opening"
-				showStatus 0
-        set project = openProject(entered)
-        if project is nothing then
-					showStatus -1
-        else
-					showStatus 1
-          projectMenu()
-        end if
-      end if
-    end if
-  wend
-end sub
-
-sub projectMenu()
-	dim entered, break, cstPath, cstRoot, projName
-
-	break = false
-
-	''Get the project path
-	cstPath = project.getProjectPath("Project")
-	cstRoot = project.getProjectPath("Root")
-	projName = right(cstPath, len(cstPath) - inStrRev(cstPath, "\"))
-
-	while not break
-
-		''Reload project scripts
-		Execute fs.OpenTextFile(getAbsoluteParent(cstRoot) + "\main.vbs", 1).ReadAll()
-
-		''Show the available options
-		stdout.writeLine("1) Build model")
-		stdout.writeLine("2) Save project")
-    stdout.writeLine("3) Clean project (undo ALL changes)")
-		stdout.writeLine("b) back (close project)")
-		stdout.writeLine("")
-
-		''Indicate ready to receive input
-		stdout.write(projName + ">")
-
-		''Handle input
-		entered = stdin.readLine
-		stdout.writeLine("")
-		if entered = "b" then
-			msg = "Saving project"
-			showStatus 0
-      project.SaveAs cstRoot + "\" + projName + ".cst" , False
-			showStatus 1
-			project.Quit
-			set project = nothing
-			break = true
-		elseif entered = "1" then
-			msg = "Building model"
-			showStatus 0
-			build(project)
-			showStatus 1
-		elseif entered = "2" then
-			msg = "Saving project"
-			showStatus 0
-      project.SaveAs cstRoot + "\" + projName + ".cst" , False
-			showStatus 1
-    elseif entered = "3" then
-      msg = "Cleaning (removing ALL changes)"
-      showStatus 0
-      set project = cleanProject(project)
-      showStatus 1
-		end if
-	wend
-
-end sub
-
-sub newProjectMenu()
-  dim entered, break
-  break = false
-  while not break
-    ''Show the availble options
-    stdout.writeLine("Enter the project name:")
-    stdout.writeLine("")
-
-    ''Indicate ready to receive input
-    stdout.write(">")
-    
-    ''Handle input
-    entered = stdin.readLine
-    stdout.writeLine("")
-    if entered = "!back" then
-      break = true
-    elseif entered <> "" then
-      'TODO: implement name check for illegal characters
-      msg = "Creating new project"
-      showStatus 0
-      createProject entered, false
-      showStatus 1
-      break = true
-    end if
-  wend
-end sub
-
-'sub rmProject(projectName)
-'end sub
-
-'sub mvProject(source, destination)
-'end sub
+End Class

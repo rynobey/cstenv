@@ -1,105 +1,99 @@
-''This file provides utility functions for operations with CST MWS projects
+Set obj = New Project
 
-function createProject(projName, returnProject)
-  ''Function for creating a new CST MWS project and saving it
-  'Returns the project if returnProject = true
+Class Project
+''This class provides utility functions for operations with CST MWS projects
 
+  Private dirs
+  Public CSTProjects
+  Public projectPath
+  Public projectName
+  
+  Private Sub Class_Initialize
+    Set CSTProjects = CreateObject("Scripting.Dictionary")
+  End Sub
 
-  ''Initialise variables
-  projPath = envPath + "projects\" + projName + "\"
+  Private Sub Class_Terminate
+    Set CSTProjects = Nothing
+  End Sub
 
-  'Create project folders if they do not yet exist
-  CreateDirs(projPath + "model")
-  CreateDirs(projPath + "simulations")
-  CreateDirs(projPath + "results")
-  CreateDirs(projPath + "cst")
+  Public Sub Init(projName)
+    projectName = projName
+    projectPath = Env.envPath + "\projects\" + projectName
+    Set dirs = Env.Use("lib\dirs")
+  End Sub
+  
+  Public Sub InterpretCommand(cmd)
+    if Trim(cmd) = "End" Or Trim(cmd) = "end" then
+      Env.using = ""
+    else
+      Execute cmd 
+    End if
+  End Sub
 
-  'Create and save a new CST MWS project if it does not yet exist
-  set project = nothing
-  if not existFileProject(projName) then
-    set project = cst.newMWS
-    project.SaveAs projPath + "cst\" + projName + ".cst" , False
-    if not returnProject then
-      project.Quit
-      set project = nothing
-    end if
-  end if
+  Public Sub Add(CSTProjectName)
+    ''Function for creating a new CST MWS project and saving it
+    'Returns the project if returnProject = true
 
-  ''Set the return value
-  set createProject = project
-end function
+    'Create and save a new CST MWS project if it does not yet exist
+    Set temp = nothing
+    if not dirs.CSTFileExists(projectName, CSTProjectName) then
+      set temp = Env.cst.CSTCOM.newMWS
+      temp.SaveAs projectPath + "\cst\" + CSTProjectName + ".cst" , False
+      if not returnProject then
+        temp.Quit
+        Set temp = Nothing
+      else
+        CSTProjects.Add CSTProjectName, temp
+      End if
+    End if
 
-function openProject(projName)
-  ''Function for opening an existing project
-  'Returns the project if opened, nothing if it does not exist
+    ''Set the return value
+    Set AddCSTProject = temp 
+  End Sub
 
-  ''Initialise variables
-  projPath = envPath + "projects\" + projName + "\"
+  Public Function Open(CSTProjectName)
+    ''Function for opening an existing project
+    'Returns the project if opened, nothing if it does not exist
 
-  ''Set the return value
-  set openProject = nothing
-  if existFileProject(projName) then
-    set openProject = cst.OpenFile(projPath + "cst\" + projName + ".cst")
-  end if
-end function
+    ''Set the return value
+    Set temp = nothing
+    condition1 = dirs.CSTFileExists(projectName, CSTprojectName)
+    condition2 = not CSTProjects.Exists(CSTProjectName)
+    if condition1 And condition2 then
+      set temp = Env.cst.CSTCOM.OpenFile(projectPath + "\cst\" + CSTProjectName + ".cst")
+      CSTProjects.Add CSTProjectName, temp
+    End if
+    Set Open = temp
+  End Function
 
-function saveAndQuitProject(project)
-  ''Function for saving and closing a project
-  'Returns true if successfull, false otherwise
+  Public Function Clean(CSTProjectName)
+    ''Function that cleans the project (deletes ALL changes)
 
-  ''Save the current state and quit
-  'TODO: implement success check
-  project.Save
-  project.Quit
+    Set CSTProject = CSTProjects.Item(CSTProjectName)
+    ''Get the project path
+    cstPath = CSTProject.getProjectPath("Project")
+    cstRoot = CSTProject.getProjectPath("Root")
+    CSTProjectName = right(cstPath, len(cstPath) - inStrRev(cstPath, "\"))
 
-  ''Release memory
-  set project = nothing
-end function
+    CSTProject.fileNew
+    CSTProject.SaveAs cstRoot + "\" + CSTProjectName + ".cst" , False
+    Set CSTProjects.Item(CSTProjectName) = CSTProject
+  End Function
 
-function existFoldersProject(projName)
-  ''Function to check if the project folders exist
-  projPath = envPath + "projects\" + projName + "\"
+  Public Function Close(CSTProjectName)
+    ''Function for saving and closing a project
+    'Returns true if successfull, false otherwise
 
-  existFoldersProject = true
-  with fs
-    if not .FolderExists(projPath) then
-      existFoldersProject = false
-    end if
-    if not .FolderExists(projPath + "model") then
-      existFoldersProject = false
-    end if
-    if not .FolderExists(projPath + "simulations") then
-      existFoldersProject = false
-    end if
-    if not .FolderExists(projPath + "results") then
-      existFoldersProject = false
-    end if
-    if not .FolderExists(projPath + "cst") then
-      existFoldersProject = false
-    end if
-  end with
-end function
+    ''Save the current state and quit
+    'TODO: implement success check
+    Set CSTProject = CSTProjects.Item(CSTProjectName)
+    CSTProject.Save
+    CSTProject.Quit
 
-function existFileProject(projName)
-  ''Function to check if the CST MWS project file exists
-  projPath = envPath + "projects\" + projName + "\"
+    ''Release memory
+    CSTProjects.Remove(CSTProjectName)
+    Set CSTProject = Nothing
 
-  if fs.FileExists(projPath + "cst\" + projName + ".cst") then
-    existFileProject = true
-  else 
-    existFileProject = false
-  end if
-end function
+  End Function
 
-function cleanProject(project)
-  ''Function that cleans the project (deletes ALL changes)
-
-	''Get the project path
-	cstPath = project.getProjectPath("Project")
-	cstRoot = project.getProjectPath("Root")
-	projName = right(cstPath, len(cstPath) - inStrRev(cstPath, "\"))
-
-  project.fileNew
-  project.SaveAs cstRoot + "\" + projName + ".cst" , False
-  set cleanProject = project
-end function
+End Class

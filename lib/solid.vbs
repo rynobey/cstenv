@@ -35,3 +35,8 @@ Sub TransformSolid(componentName, solidName, orientation, offsetX, offsetY, offs
     .Transform "Shape", "Translate" 
   End With 
 End Sub
+
+Sub LocalMeshSolid(componentName, solidName, dx, dy, dz, px, py, pz)
+  project.Solid.SetSolidLocalMeshProperties componentName + ":" + solidName, "PBA", "True", "0", "True", "False", cStr(dx), cStr(dy), cStr(dz), cStr(px), cStr(py), cStr(pz), "False", "1.0", "False", "1.0", "False", "True", "True", "True" 
+End Sub
+
