@@ -17,10 +17,27 @@ Class TxLineConical
 
 
   ''Define private variables
-  Private profileName, endName
+  Private profileName, endName, project, solid
 
+  Private Sub Class_Initialize
+    'set up default values
+    theta2 = 90
+    charImpedance = 5
+    offsetX = 0
+    offsetY = 0
+    offsetZ = 0
+    orientation = "z"
+    material = "Vacuum"
+    componentName = "Conical"
+    solidName = "Tx"
+  End Sub
 
   ''Public methods 
+  Public Sub Init(CSTProject)
+    Set project = CSTProject
+    Set solid = Env.Use("lib\solid")
+    solid.Init(CSTProject)
+  End Sub
 
   Public Sub Origin(X, Y, Z)
     offsetX = X
@@ -29,6 +46,9 @@ Class TxLineConical
   End Sub
 
   Public Sub Create()
+    if isEmpty(theta1) then 
+      theta1 = CalcTheta1(charImpedance)
+    End if
     CreateFace
     TransformFace
     RotateFace
@@ -38,12 +58,16 @@ Class TxLineConical
     project.Solid.Delete componentName + ":" + profileName
 
     SphericalEnd
-    TransformSolid componentName, solidName, orientation, offsetX, offsetY, offsetZ
+    solid.TransformSolid componentName, solidName, orientation, offsetX, offsetY, offsetZ
   End Sub 
 
   Public Function Impedance()
     charImpedance = 60*log((project.tanD(theta2/2))/(project.tanD(theta1/2)))
     impedance = charImpedance
+  End Function
+
+  Public Function CalcTheta1(impedance)
+    CalcTheta1 = 2*project.atnd((project.tanD(theta2/2))/(exp(impedance/60)))
   End Function
 
 

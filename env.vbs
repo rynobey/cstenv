@@ -32,7 +32,7 @@ Class Environment
 
   Private Sub ConCST()
     if isEmpty(cst) then
-      Set cst = Use("lib/cst")
+      Set cst = Use("lib\cst")
     End if
   End Sub
 
@@ -52,6 +52,22 @@ Class Environment
   End Sub
 
   Public Sub Main()
+    Set inputArguments = WScript.Arguments
+    for each arg in inputArguments
+      On Error Resume Next
+      Err.Clear
+      WScript.stdout.write(using & ">")
+      cmd = WScript.stdin.ReadLine
+      if cmd <> EXIT_COMMAND then
+        InterpretCommand(cmd)
+      End if
+      if Err.Number <> 0 then 
+        msg = "ERROR " & Err.Number & ": " & Err.Source
+        msg = msg & ": " & Err.Description
+        WScript.stdout.writeLine(msg)
+        Err.Clear
+      End if
+    Next
     While cmd <> EXIT_COMMAND
       On Error Resume Next
       Err.Clear
@@ -79,7 +95,7 @@ Class Environment
   Public Function NewProject(projectName)
     'Create project folders if they do not yet exist
     path = envPath + "\projects\" + projectName + "\"
-    dirs.CreateDirs(path + "model")
+    dirs.CreateDirs(path + "models")
     dirs.CreateDirs(path + "simulations")
     dirs.CreateDirs(path + "results")
     dirs.CreateDirs(path + "cst")

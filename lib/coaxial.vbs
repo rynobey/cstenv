@@ -1,3 +1,5 @@
+Set obj = New TxLineCoaxial
+
 Class TxLineCoaxial
 
   ''Define public variables
@@ -11,12 +13,39 @@ Class TxLineCoaxial
   Public componentName
   Public solidName
   Public material
+  Public charImpedance
 
   ''Define private variables
-  Private innerName
+  Private innerName, project, solid
  
+  Private Sub Class_Initialize
+    'set up default values
+    charImpedance = 50
+    OuterRadius = 2.3
+    offsetX = 0
+    offsetY = 0
+    offsetZ = 0
+    orientation = "z"
+    material = "Vacuum"
+    componentName = "Coaxial"
+    solidName = "Tx"
+    Set solid = Env.Use("lib\solid")
+  End Sub
+
 
   ''Define public methods
+  Public Sub Init(CSTProject)
+    Set project = CSTProject
+    solid.Init(CSTProject)
+  End Sub
+
+  Public Function InnerFromOuter(impedance, radius)
+    InnerFromOuter = radius/exp(impedance/60)
+  End Function
+
+  Public Function OuterFromInner(impedance, radius)
+    InnerFromOuter = exp(impedance/60)*radius
+  End Function
 
   Public Sub Origin(X, Y, Z)
     offsetX = X
@@ -25,6 +54,13 @@ Class TxLineCoaxial
   End Sub
 
   Public Sub Create
+    if isEmpty(InnerRadius) then
+      InnerRadius = InnerFromOuter(charImpedance, OuterRadius)
+    elseif isEmpty(OuterRadius) then
+      OuterRadius = OuterFromInner(CharImpedance, InnerRadius)
+    elseif isEmpty(charImpedance) then
+      charImpedance = Impedance()
+    End if
     OuterCylinder
     InnerCylinder
 
@@ -32,7 +68,7 @@ Class TxLineCoaxial
       .Subtract componentName + ":" + solidName, componentName + ":" + innerName
     End With 
 
-    TransformSolid componentName, solidName, orientation, offsetX, offsetY, offsetZ
+    solid.TransformSolid componentName, solidName, orientation, offsetX, offsetY, offsetZ
   End Sub
 
   Public Function Impedance()

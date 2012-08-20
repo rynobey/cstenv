@@ -1,3 +1,5 @@
+Set obj = New ConicalCoaxialTransition
+
 Class ConicalCoaxialTransition
 
   ''Define public variables
@@ -24,9 +26,23 @@ Class ConicalCoaxialTransition
   Private cone2Name
   Private cone3Name
   Private cylinderName
+  Private project
+  Private solid
 
+  Private Sub Class_Initialize
+    'set up default values
+    material = "Vacuum"
+    componentName = "Transition"
+    solidName = "ConicalToCoaxial"
+  End Sub
 
   ''Define public methods
+  Public Sub Init(CSTProject)
+    Set project = CSTProject
+    Set solid = Env.Use("lib\solid")
+    solid.Init(CSTProject)
+  End Sub
+
   Public Sub Origin(X, Y, Z)
     offsetX = X
     offsetY = Y
@@ -159,7 +175,7 @@ Class ConicalCoaxialTransition
     arg2 = componentName + ":" + bigTorusName
     project.Solid.Intersect arg1, arg2
 
-    TransformSolid componentName, solidName, conical.orientation, conical.offsetX, conical.offsetY, conical.offsetZ
+    solid.TransformSolid componentName, solidName, conical.orientation, conical.offsetX, conical.offsetY, conical.offsetZ
   End Sub
 
   Private Sub AdjustConicalLine(bR1, bR2, r1, r2, a)
@@ -172,7 +188,11 @@ Class ConicalCoaxialTransition
       .BottomRadius cStr(bR2 + r1 - r1*project.sinD(90-conical.Theta2))
       .TopRadius cStr(bR2 + r1)
       .Axis "z" 
-      .Zrange cStr(a - r1*project.cosD(90-conical.Theta2)), cStr(a)
+      if a > 0 then
+        .Zrange cStr(a - r1*project.cosD(90-conical.Theta2)), cStr(a)
+      else
+        .Zrange cStr(a - r1*project.cosD(90-conical.Theta2)), "0"
+      End if
       .Xcenter "0" 
       .Ycenter "0" 
       .Segments "0" 
@@ -201,7 +221,7 @@ Class ConicalCoaxialTransition
     arg2 = componentName + ":" + cone3Name
     project.Solid.Add arg1, arg2
 
-    TransformSolid componentName, cone2Name, conical.orientation, conical.offsetX, conical.offsetY, conical.offsetZ
+    solid.TransformSolid componentName, cone2Name, conical.orientation, conical.offsetX, conical.offsetY, conical.offsetZ
 
     arg1 = conical.componentName + ":" + conical.solidName
     arg2 = componentName + ":" + cone2Name
@@ -214,29 +234,8 @@ Class ConicalCoaxialTransition
   End Sub
 
   Private Sub AdjustCoaxialLine(bR1, bR2, r1, r2, a)
-    With project.Cylinder 
-      .Reset 
-      cylinderName = project.Solid.getNextFreeName()
-      .Name cylinderName 
-      .Component componentName
-      .Material material
-      .OuterRadius coaxial.OuterRadius 
-      .InnerRadius "0"
-      .Axis "z" 
-      .Zrange cStr(-coaxial.Length/2), cStr(a) 
-      .Xcenter "0" 
-      .Ycenter "0" 
-      .Segments "0" 
-      .Create 
-    End With
-
-    TransformSolid componentName, cylinderName, coaxial.orientation, coaxial.offsetX, coaxial.offsetY, coaxial.offsetZ
-
-    arg1 = coaxial.componentName + ":" + coaxial.solidName
-    arg2 = componentName + ":" + cylinderName
-    project.Solid.Subtract arg1, arg2
-
-    coaxialLengthRemoved = coaxial.Length/2 + a 
+    solid.TransformSolid coaxial.componentName, coaxial.solidName, conical.orientation, conical.offsetX, conical.offsetY, a + coaxial.Length/2
+    coaxial.offsetZ = a + coaxial.Length/2
   End Sub
 
 End Class
