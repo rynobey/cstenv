@@ -90,6 +90,11 @@ Class Environment
     temp.Init(projectName)
     Projects.Add projectName, temp
     Set OpenProject = temp
+    Set temp = Nothing
+  End Function
+
+  Public Function CloseProject(projectName)
+    Projects.Remove(projectName)
   End Function
 
   Public Function NewProject(projectName)

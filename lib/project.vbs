@@ -30,8 +30,6 @@ Class Project
   Public Sub InterpretCommand(cmd)
     if Trim(cmd) = "End" Or Trim(cmd) = "end" then
       Env.using = ""
-      cmd = "Env.Projects.Remove(""" + projectName + """)"
-      Execute cmd 
     else
       Execute cmd 
     End if
@@ -77,9 +75,35 @@ Class Project
     Set temp = Nothing
   End Function
 
-  Public Function Build(CSTProjectName)
+  Public Function Run(CSTProjectName, SimulationName)
+    path = "projects\" + projectName + "\simulations\" + SimulationName
+    Set sim = Env.Use(path)
+
+    Set script = Env.Use("lib\script")
+    for each ParameterKey in sim.ParameterSetArray(0).Keys
+      leftSide = "["
+      firstTime = true
+      for each ParameterSet in sim.ParameterSetArray
+        if firstTime then
+          firstTime = false
+          leftSide = leftSide & ParameterSet.Item(ParameterKey)
+        else
+          leftSide = leftSide & ", " & ParameterSet.Item(ParameterKey)
+        End if
+      Next
+      script.AddLine(ParameterKey & " = " & leftSide & "];")
+    Next
+    path = "projects\" + projectName + "\results\" + SimulationName + ".m"
+    script.SaveAs(path)
+
+    sim.Init(Me)
+    'sim.Run()
+    Set sim = Nothing
+  End Function
+
+  Public Function Build(CSTProjectName, ParameterSet)
     Set model = CSTModels.Item(CSTProjectName)
-    model.Build()
+    model.Build(ParameterSet)
     Set model = Nothing
   End Function
 
