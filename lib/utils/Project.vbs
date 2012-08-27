@@ -2,7 +2,7 @@ Set obj = New Project
 
 Class Project
 
-  Private dirs
+  Private FileSystem
   Public CSTProjects
   Public CSTModels
   Public projectPath
@@ -24,23 +24,23 @@ Class Project
   Public Sub Init(projName)
     projectName = projName
     projectPath = Env.envPath + "\projects\" + projectName
-    Set dirs = Env.Use("lib\dirs")
+    Set FileSystem = Env.Use("lib\utils\FileSystem")
   End Sub
   
   Public Sub InterpretCommand(cmd)
     if Trim(cmd) = "End" Or Trim(cmd) = "end" then
-      Env.using = ""
+      Env.CurrentProject = ""
     else
       Execute cmd 
     End if
   End Sub
 
-  Public Sub Add(CSTProjectName)
+  Public Function Add(CSTProjectName, returnProject)
     ''Function for creating a new CST MWS project and saving it
     'Returns the project if returnProject = true
     Set temp = nothing
-    if not dirs.CSTFileExists(projectName, CSTProjectName) then
-      set temp = Env.cst.CSTCOM.newMWS
+    if not FileSystem.CSTFileExists(projectName, CSTProjectName) then
+      set temp = Env.CSTWrapper.CSTCOM.newMWS
       temp.SaveAs projectPath + "\cst\" + CSTProjectName + ".cst" , False
       if not returnProject then
         temp.Quit
@@ -49,61 +49,62 @@ Class Project
         CSTProjects.Add CSTProjectName, temp
       End if
     End if
-    Set AddCSTProject = temp 
-  End Sub
+    Set Add = temp 
+  End Function
 
   Public Function Open(CSTProjectName)
     Set temp = Nothing
-    condition1 = dirs.CSTFileExists(projectName, CSTprojectName)
+    condition1 = FileSystem.CSTFileExists(projectName, CSTprojectName)
     condition2 = not CSTProjects.Exists(CSTProjectName)
     if condition1 And condition2 then
-      set temp = Env.cst.CSTCOM.OpenFile(projectPath + "\cst\" + CSTProjectName + ".cst")
+      Set temp = Env.CSTWrapper.CSTCOM.OpenFile(projectPath + "\cst\" + CSTProjectName + ".cst")
       CSTProjects.Add CSTProjectName, temp
+    elseif not condition1 And condition2 then
+      Set temp = Add(CSTProjectName, True)
+      CSTProjects.Add CSTProjectName, temp
+    elseif not condition2 then
+      Env.Print("That CST Project is already open!")
     End if
     Set Open = temp
   End Function
 
   Public Function SetModel(CSTProjectName, CSTModelName)
     path = "projects\" + projectName + "\models\" + CSTModelName
-    Set temp = Env.Use(path)
-    temp.Init(CSTProjects.Item(CSTProjectName))
+    Set Temp = Env.Use(path)
+    Temp.Init(CSTProjects.Item(CSTProjectName))
     if CSTModels.Exists(CSTProjectName) then
-      Set CSTModels.Item(CSTProjectName) = temp
+      Set CSTModels.Item(CSTProjectName) = Temp
     else
-      CSTModels.Add CSTProjectName, temp
+      CSTModels.Add CSTProjectName, Temp
     End if
-    Set temp = Nothing
+    Set Temp = Nothing
   End Function
 
-  Public Function Run(CSTProjectName, SimulationName)
+  Public Function Run(SimulationName, ResultsFolderName)
     path = "projects\" + projectName + "\simulations\" + SimulationName
-    Set sim = Env.Use(path)
-
-    Set script = Env.Use("lib\script")
-    for each ParameterKey in sim.ParameterSetArray(0).Keys
-      leftSide = "["
-      firstTime = true
-      for each ParameterSet in sim.ParameterSetArray
-        if firstTime then
-          firstTime = false
-          leftSide = leftSide & ParameterSet.Item(ParameterKey)
-        else
-          leftSide = leftSide & ", " & ParameterSet.Item(ParameterKey)
-        End if
-      Next
-      script.AddLine(ParameterKey & " = " & leftSide & "];")
-    Next
-    path = "projects\" + projectName + "\results\" + SimulationName + ".m"
-    script.SaveAs(path)
-
+    Set Sim = Env.Use(path)
     sim.Init(Me)
-    'sim.Run()
-    Set sim = Nothing
+    sim.Run(ResultsFolderName)
+    Set Sim = Nothing
+  End Function
+
+  Public Function Check(SimulationName)
+    path = "projects\" + projectName + "\simulations\" + SimulationName
+    Set Sim = Env.Use(path)
+    sim.Init(Me)
+    sim.Check()
+    Set Sim = Nothing
   End Function
 
   Public Function Build(CSTProjectName, ParameterSet)
     Set model = CSTModels.Item(CSTProjectName)
     model.Build(ParameterSet)
+    Set model = Nothing
+  End Function
+
+  Public Function DBuild(CSTProjectName)
+    Set model = CSTModels.Item(CSTProjectName)
+    model.DBuild()
     Set model = Nothing
   End Function
 

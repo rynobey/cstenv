@@ -1,6 +1,6 @@
-Set obj = New TxLineCoaxial
+Set obj = New CoaxialTransmissionLine
 
-Class TxLineCoaxial
+Class CoaxialTransmissionLine 
 
   ''Define public variables
   Public length
@@ -9,6 +9,9 @@ Class TxLineCoaxial
   Public offsetX
   Public offsetY
   Public offsetZ
+  Public angleX
+  Public angleY
+  Public angleZ
   Public orientation
   Public componentName
   Public solidName
@@ -16,27 +19,32 @@ Class TxLineCoaxial
   Public charImpedance
 
   ''Define private variables
-  Private innerName, project, solid
+  Private innerName
+  Private CSTProject
+  Private Solid
  
   Private Sub Class_Initialize
     'set up default values
     charImpedance = 50
     OuterRadius = 2.3
-    offsetX = 0
-    offsetY = 0
-    offsetZ = 0
+    offSetX = 0
+    offSetY = 0
+    offSetZ = 0
+    angleX = 0
+    angleY = 0
+    angleZ = 0
     orientation = "z"
     material = "Vacuum"
     componentName = "Coaxial"
     solidName = "Tx"
-    Set solid = Env.Use("lib\solid")
   End Sub
 
 
   ''Define public methods
-  Public Sub Init(CSTProject)
-    Set project = CSTProject
-    solid.Init(CSTProject)
+  Public Sub Init(NewCSTProject)
+    Set CSTProject = NewCSTProject
+    Set Solid = Env.Use("lib\utils\Solid")
+    Solid.Init(CSTProject)
   End Sub
 
   Public Function InnerFromOuter(impedance, radius)
@@ -44,8 +52,72 @@ Class TxLineCoaxial
   End Function
 
   Public Function OuterFromInner(impedance, radius)
-    InnerFromOuter = exp(impedance/60)*radius
+    OuterFromOuter = exp(impedance/60)*radius
   End Function
+
+  Public Sub PickPositiveFace()
+    'rotation in the x-direction:
+    'if orientation = "z" then
+    xr = length/2
+    yr = xr*CSTProject.CosD(angleX)
+    temp1 = xr*CSTProject.SinD(angleX)*xr*CSTProject.SinD(angleX)
+    temp2 = yr*CSTProject.SinD(angleY)*yr*CSTProject.SinD(angleY)
+    zr = sqr(temp1 + temp2)  
+
+    dY = xr*CSTProject.SinD(angleX)
+    dZ = xr*CSTProject.CosD(angleX)
+
+    dX = yr*CSTProject.SinD(angleY)
+    dZ = yr*CSTProject.CosD(angleY)
+
+    angleFromPoint = CSTProject.ATn2D(dY, dX)
+    xPoint = offSetX + zr*CSTProject.CosD(angleFromPoint + angleZ)
+    yPoint = offSetY + zr*CSTProject.SinD(angleFromPoint + angleZ)
+    zPoint = offSetZ + dZ
+
+    ''Moves point onto face (not center of coax)
+    if angleX = 0 And angleZ = 0 then
+      yPoint = yPoint + (outerRadius + innerRadius)/2
+    End if
+    'elseif orientation = "y" then
+    '  xr = length/2
+    '  yr = xr*CSTProject.SinD(angleX)
+    '  temp1 = xr*CSTProject.CosD(angleX)*xr*CSTProject.CosD(angleX)
+    '  temp2 = yr*CSTProject.SinD(angleY)*yr*CSTProject.SinD(angleY)
+    '  zr = sqr(temp1 + temp2)  
+    'elseif orientation = "x" then
+    '  xr = 0
+    '  yr = length/2
+    '  zr = yr*CSTProject.CosD(angleY)
+    'End if
+    With CSTProject.Pick
+      .ClearAllPicks
+      .PickFaceFromPoint componentName + ":" + solidName, xPoint, yPoint, zPoint
+    End With
+  End Sub
+
+  Public Sub PickNegativeFace()
+      xr = -length/2
+      yr = xr*CSTProject.CosD(angleX)
+      temp1 = xr*CSTProject.SinD(angleX)*xr*CSTProject.SinD(angleX)
+      temp2 = yr*CSTProject.SinD(angleY)*yr*CSTProject.SinD(angleY)
+      zr = sqr(temp1 + temp2)  
+
+      dY = xr*CSTProject.SinD(angleX)
+      dZ = xr*CSTProject.CosD(angleX)
+
+      dX = yr*CSTProject.SinD(angleY)
+      dZ = yr*CSTProject.CosD(angleY)
+
+      angleFromPoint = CSTProject.ATn2D(dY, dX)
+      xPoint = zr*CSTProject.CosD(angleFromPoint + angleZ)
+      yPoint = zr*CSTProject.SinD(angleFromPoint + angleZ)
+      zPoint = offSetZ + dZ
+      With CSTProject.Pick
+        .ClearAllPicks
+        .PickFaceFromPoint componentName + ":" + coaxSolidName, xPoint, yPoint, zPoint
+      End With
+  End Sub
 
   Public Sub Origin(X, Y, Z)
     offsetX = X
@@ -59,26 +131,27 @@ Class TxLineCoaxial
     elseif isEmpty(OuterRadius) then
       OuterRadius = OuterFromInner(CharImpedance, InnerRadius)
     elseif isEmpty(charImpedance) then
-      charImpedance = Impedance()
+      charImpedance = CalcImpedance
     End if
     OuterCylinder
     InnerCylinder
 
-    With project.Solid 
+    With CSTProject.Solid 
       .Subtract componentName + ":" + solidName, componentName + ":" + innerName
     End With 
 
-    solid.TransformSolid componentName, solidName, orientation, offsetX, offsetY, offsetZ
+    Solid.MoveSolid Me, offSetX, offSetY, offSetZ, False
   End Sub
 
-  Public Function Impedance()
+  Public Function CalcImpedance()
     charImpedance = 60*log((outerRadius)/(innerRadius))
-    impedance = charImpedance
+    CalcImpedance = charImpedance
   End Function
 
-  Public Function AddPort(number)
-    With project.Port 
+  Public Function AddPort()
+    With CSTProject.Port 
       .Reset 
+      number = .StartPortNumberIteration() + 1
       .PortNumber cStr(number)
       .Label "" 
       .NumberOfModes "1" 
@@ -100,7 +173,7 @@ Class TxLineCoaxial
       .Create 
     End With 
  
-    With project.Transform 
+    With CSTProject.Transform 
       .Reset 
       .Name "port" + cStr(number)
       .Origin "Free" 
@@ -109,8 +182,6 @@ Class TxLineCoaxial
         .Angle "0", "90", "0"
       elseif orientation = "y" then
         .Angle "-90", "0", "0"
-      elseif orientation = "z" then
-        .Angle "0", "0", "0"
       end if
       .MultipleObjects "False" 
       .GroupObjects "False" 
@@ -119,7 +190,7 @@ Class TxLineCoaxial
       .Transform "Port", "Rotate" 
     End With 
 
-    With project.Transform 
+    With CSTProject.Transform 
       .Reset 
       .Name "port" + cStr(number) 
       .Vector cStr(offsetX), cStr(offsetY), cStr(offsetZ)
@@ -137,9 +208,9 @@ Class TxLineCoaxial
   ''Define private methods
 
   Private Sub InnerCylinder()
-    With project.Cylinder 
+    With CSTProject.Cylinder 
       .Reset 
-      innerName = project.Solid.getNextFreeName()
+      innerName = CSTProject.Solid.getNextFreeName()
       .Name innerName 
       .Component componentName
       .Material material
@@ -155,7 +226,7 @@ Class TxLineCoaxial
   End Sub 
 
   Private Sub OuterCylinder()
-    With project.Cylinder 
+    With CSTProject.Cylinder 
       .Reset
       .Name solidName
       .Component componentName

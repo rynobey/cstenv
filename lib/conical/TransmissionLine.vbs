@@ -1,6 +1,6 @@
-Set obj = New TxLineConical
+Set obj = New TransmissionLine
 
-Class TxLineConical
+Class TransmissionLine
 
   ''Define public variables
   Public radius
@@ -14,35 +14,22 @@ Class TxLineConical
   Public solidName
   Public material
   Public charImpedance
-
+  Public Addons
 
   ''Define private variables
-  Private profileName, endName, project, solid
+  Private profileName
+  Private endName
+  Private CSTProject
+  Private Solid
 
-  Private Sub Class_Initialize
-    'set up default values
-    theta2 = 90
-    charImpedance = 5
-    offsetX = 0
-    offsetY = 0
-    offsetZ = 0
-    orientation = "z"
-    material = "Vacuum"
-    componentName = "Conical"
-    solidName = "Tx"
-  End Sub
 
-  ''Public methods 
-  Public Sub Init(CSTProject)
-    Set project = CSTProject
-    Set solid = Env.Use("lib\solid")
-    solid.Init(CSTProject)
-  End Sub
+  ''PUBLIC METHODS
 
-  Public Sub Origin(X, Y, Z)
-    offsetX = X
-    offsetY = Y
-    offsetZ = Z
+  Public Sub Init(NewCSTProject)
+    Set CSTProject = NewCSTProject
+    Set Solid = Env.Use("lib\utils\Solid")
+    Solid.Init(CSTProject)
+    Set Addons = CreateObject("Scripting.Dictionary")
   End Sub
 
   Public Sub Create()
@@ -54,37 +41,52 @@ Class TxLineConical
     RotateFace
 
     ''Remove temp objects
-    project.Pick.ClearAllPicks
-    project.Solid.Delete componentName + ":" + profileName
+    CSTProject.Pick.ClearAllPicks
+    CSTProject.Solid.Delete componentName + ":" + profileName
 
     SphericalEnd
-    solid.TransformSolid componentName, solidName, orientation, offsetX, offsetY, offsetZ
+    Solid.MoveSolid Me, offsetX, offsetY, offsetZ, False
   End Sub 
 
-  Public Function Impedance()
-    charImpedance = 60*log((project.tanD(theta2/2))/(project.tanD(theta1/2)))
-    impedance = charImpedance
+  Public Function CalcImpedance()
+    charImpedance = 60*log((CSTProject.TanD(theta2/2))/(CSTProject.TanD(theta1/2)))
+    CalcImpedance = charImpedance
   End Function
 
   Public Function CalcTheta1(impedance)
-    CalcTheta1 = 2*project.atnd((project.tanD(theta2/2))/(exp(impedance/60)))
+    CalcTheta1 = 2*CSTProject.AtnD((CSTProject.TanD(theta2/2))/(exp(impedance/60)))
   End Function
 
 
-  ''Private methods 
+  ''PRIVATE METHODS
+
+  Private Sub Class_Initialize
+    'set up default values
+    theta2 = 90
+    charImpedance = 5
+    offSetX = 0
+    offSetY = 0
+    offSetZ = 0
+    angleX = 0
+    angleY = 0
+    angleZ = 0
+    orientation = "z"
+    material = "Vacuum"
+    componentName = "Conical"
+    solidName = "Tx"
+  End Sub
 
   Private Sub CreateFace()
-    ''Internal settings
     dTheta = abs(theta1 - theta2)
-    With project.AnalyticalFace
+    With CSTProject.AnalyticalFace
       .Reset 
       .Component componentName 
-      profileName = project.Solid.getNextFreeName()
+      profileName = CSTProject.Solid.getNextFreeName()
       .Name profileName
       .Material material
       .LawX "u"
       .LawY "0"
-      .LawZ "v*u" + "*" + cStr(project.tanD(dTheta/2))
+      .LawZ "v*u" + "*" + cStr(CSTProject.TanD(dTheta/2))
       .ParameterRangeU "0", radius
       .ParameterRangeV "-1", "1" 
       .Create
@@ -92,9 +94,8 @@ Class TxLineConical
   End Sub
 
   Private Sub TransformFace()
-    ''Internal settings
     dTheta = abs(theta1 - theta2)
-    With project.Transform 
+    With CSTProject.Transform 
       .Reset 
       .component componentName
       .Name componentName + ":" + profileName
@@ -111,14 +112,14 @@ Class TxLineConical
 
   Private Sub RotateFace()
     ''Pick Face and add edge for rotation
-    With project.Pick
+    With CSTProject.Pick
       .ClearAllPicks
       .PickFaceFromId componentName + ":" + profileName, "1"
       .AddEdge "0.0", "0.0", "10", "0.0", "0.0", "-10"
     End With
 
     ''Rotate face to create conical transmission line
-    With project.Rotate 
+    With CSTProject.Rotate 
       .Reset 
       .Component componentName
       .Name solidName
@@ -140,10 +141,10 @@ Class TxLineConical
 
   Private Sub SphericalEnd()
     ''Intersect with a sphere to create spherical ends
-    With project.Sphere 
+    With CSTProject.Sphere 
       .Reset 
       .Component componentName
-      endName = project.Solid.getNextFreeName()
+      endName = CSTProject.Solid.getNextFreeName()
       .Name endName
       .Material material 
       .Axis "z" 
@@ -156,7 +157,7 @@ Class TxLineConical
     End With
     arg1 = componentName + ":" + solidName
     arg2 = componentName + ":" + endName
-    project.Solid.Intersect arg1, arg2
+    CSTProject.Solid.Intersect arg1, arg2
   End Sub
 
 End Class

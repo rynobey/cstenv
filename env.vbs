@@ -1,47 +1,60 @@
-Set env = New Environment
-env.Main()
-Set env = Nothing
+Set Env = New Environment
+Env.Main()
+Set Env = Nothing
 
 Class Environment
 
-  Private fs
-  Private dirs
+  Private FS
+  Private FileSystem
   Private EXIT_COMMAND
-  Public using
+  Public currentProject
   Public envPath
   Public libPath
-  Public cst
+  Public CSTWrapper
   Public Projects
   
   Private Sub Class_Initialize()
-    Set fs = CreateObject("Scripting.FileSystemObject")
-    envPath = fs.getAbsolutePathName(".")
+    Set FS = CreateObject("Scripting.FileSystemObject")
+    envPath = FS.getAbsolutePathName(".")
     Set Projects = CreateObject("Scripting.Dictionary")
-    Set dirs = Use("lib\dirs")
-    ExecuteGlobal "Set env = Me"
+    Set FileSystem = Use("lib\utils\FileSystem")
+    ExecuteGlobal "Set Env = Me"
     EXIT_COMMAND = "exit"
-    using = ""
+    currentProject = ""
     ConCST
   End Sub
 
   Private Sub Class_Terminate()
-    Set cst = Nothing
-    Set fs = Nothing
-    Set dirs = Nothing
+    Set CSTWrapper = Nothing
+    Set FS = Nothing
+    Set FileSystem = Nothing
   End Sub
 
   Private Sub ConCST()
-    if isEmpty(cst) then
-      Set cst = Use("lib\cst")
+    if isEmpty(CSTWrapper) then
+      Set CSTWrapper = Use("lib\utils\CSTWrapper")
+    End if
+  End Sub
+
+  Private Sub Using(projectName)
+    On Error Resume Next
+    Err.Clear
+    if Projects.Exists(projectName) then
+      currentProject = projectName
+    else
+      OpenProject projectName
+      currentProject = projectName
+    End if
+    if Err.Number <> 0 then
+      Print("Failed to open project """ + projectName + """")
+      currentProject = ""
+      Err.Clear
     End if
   End Sub
 
   Private Sub InterpretCommand(cmd)
-    'TODO: tokenize cmd str on ":" characters and loop over tokens
-    if InStr(1, cmd, "Using", 1) = 1 then
-      using = Trim(Right(cmd, Len(cmd) - Len("Using")))
-    elseif using <> "" then
-      Projects.Item(using).InterpretCommand(cmd)
+    if currentProject <> "" then
+      Projects.Item(currentProject).InterpretCommand(cmd)
     else
       Execute cmd 
     End if
@@ -56,9 +69,9 @@ Class Environment
     for each arg in inputArguments
       On Error Resume Next
       Err.Clear
-      WScript.stdout.write(using & ">")
+      WScript.stdout.write(currentProject & ">")
       cmd = WScript.stdin.ReadLine
-      if cmd <> EXIT_COMMAND then
+      if Trim(cmd) <> EXIT_COMMAND then
         InterpretCommand(cmd)
       End if
       if Err.Number <> 0 then 
@@ -71,9 +84,9 @@ Class Environment
     While cmd <> EXIT_COMMAND
       On Error Resume Next
       Err.Clear
-      WScript.stdout.write(using & ">")
+      WScript.stdout.write(currentProject & ">")
       cmd = WScript.stdin.ReadLine
-      if cmd <> EXIT_COMMAND then
+      if Trim(cmd) <> EXIT_COMMAND then
         InterpretCommand(cmd)
       End if
       if Err.Number <> 0 then 
@@ -86,11 +99,11 @@ Class Environment
   End Sub
 
   Public Function OpenProject(projectName)
-    Set temp = Use("lib\project")
-    temp.Init(projectName)
-    Projects.Add projectName, temp
-    Set OpenProject = temp
-    Set temp = Nothing
+    Set Temp = Use("lib\utils\Project")
+    Temp.Init(projectName)
+    Projects.Add projectName, Temp
+    Set OpenProject = Temp
+    Set Temp = Nothing
   End Function
 
   Public Function CloseProject(projectName)
@@ -100,10 +113,10 @@ Class Environment
   Public Function NewProject(projectName)
     'Create project folders if they do not yet exist
     path = envPath + "\projects\" + projectName + "\"
-    dirs.CreateDirs(path + "models")
-    dirs.CreateDirs(path + "simulations")
-    dirs.CreateDirs(path + "results")
-    dirs.CreateDirs(path + "cst")
+    FileSystem.CreateDirs(path + "models")
+    FileSystem.CreateDirs(path + "simulations")
+    FileSystem.CreateDirs(path + "results")
+    FileSystem.CreateDirs(path + "cst")
 
     'TODO: Add creation of default scripts
 

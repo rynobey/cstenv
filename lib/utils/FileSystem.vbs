@@ -1,7 +1,7 @@
-Set obj = New Dirs
+Set obj = New FileSystem
 
-Class Dirs
-''Ths class provides utility functions for folder operations
+Class FileSystem
+''Ths class provides utility functions for file/folder operations
   Private fs
 
   Private Sub Class_Initialize
@@ -10,6 +10,27 @@ Class Dirs
 
   Private Sub Class_Terminate
     Set fs = Nothing
+  End Sub
+
+  Public Sub FileAppend(filePath, input)
+    Set file = fs.OpenTextFile(filePath, 8, True, 0)
+    file.write(input)
+    file.Close
+    Set file = Nothing
+  End Sub
+
+  Public Sub FileAppendLine(filePath, input)
+    Set file = fs.OpenTextFile(filePath, 8, True, 0)
+    file.writeLine(input)
+    file.Close
+    Set file = Nothing
+  End Sub
+
+  Public Sub FileWrite(filePath, input)
+    Set file = fs.OpenTextFile(filePath, 2, True, 0)
+    file.write(input)
+    file.Close
+    Set file = Nothing
   End Sub
 
   Public Function CreateDirs(paths)
